@@ -1,6 +1,6 @@
-import {create} from 'zustand';
-import {produce} from 'immer';
-import {persist, createJSONStorage} from 'zustand/middleware';
+import { create } from 'zustand';
+import { produce } from 'immer';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CoffeeData from '../data/CoffeeData';
 import BeansData from '../data/BeansData';
@@ -8,12 +8,24 @@ import BeansData from '../data/BeansData';
 export const useStore = create(
   persist(
     (set, get) => ({
+      userDetails: null, // To store logged-in user details
+      isLoggedIn: false, // To manage login status
       CoffeeList: CoffeeData,
       BeanList: BeansData,
       CartPrice: 0,
       FavoritesList: [],
       CartList: [],
       OrderHistoryList: [],
+      setUserDetails: (details: any) =>
+        set({
+          userDetails: details,
+          isLoggedIn: true,
+        }),
+      logoutUser: () =>
+        set({
+          userDetails: null,
+          isLoggedIn: false,
+        }),
       addToCart: (cartItem: any) =>
         set(
           produce(state => {
@@ -61,7 +73,7 @@ export const useStore = create(
                 tempprice =
                   tempprice +
                   parseFloat(state.CartList[i].prices[j].price) *
-                    state.CartList[i].prices[j].quantity;
+                  state.CartList[i].prices[j].quantity;
               }
               state.CartList[i].ItemPrice = tempprice.toFixed(2).toString();
               totalprice = totalprice + tempprice;

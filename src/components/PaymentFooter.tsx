@@ -19,7 +19,7 @@ interface PaymentFooterProps {
   buttonTitle: string;
 }
 
-const PaymentFooter: React.FC<PaymentFooterProps> = ({
+const PaymentFooter: React.FC<any> = ({
   price,
   buttonPressHandler,
   buttonTitle,
@@ -29,7 +29,7 @@ const PaymentFooter: React.FC<PaymentFooterProps> = ({
       <View style={styles.PriceContainer}>
         <Text style={styles.PriceTitle}>Price</Text>
         <Text style={styles.PriceText}>
-          {price.currency} <Text style={styles.Price}>{price.price}</Text>
+          $ <Text style={styles.Price}>{price}</Text>
         </Text>
       </View>
       <TouchableOpacity

@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Dimensions,
   ImageBackground,
-  ImageProps,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -23,26 +22,18 @@ const CARD_WIDTH = Dimensions.get('window').width * 0.32;
 
 interface CoffeeCardProps {
   id: string;
-  index: number;
-  type: string;
-  roasted: string;
-  imagelink_square: ImageProps;
-  name: string;
-  special_ingredient: string;
-  average_rating: number;
-  price: any;
-  buttonPressHandler: any;
+  title: string;
+  subtitle: string;
+  image: string;
+  price: number;
+  buttonPressHandler: (item: any) => void;
 }
 
 const CoffeeCard: React.FC<CoffeeCardProps> = ({
   id,
-  index,
-  type,
-  roasted,
-  imagelink_square,
-  name,
-  special_ingredient,
-  average_rating,
+  title,
+  subtitle,
+  image,
   price,
   buttonPressHandler,
 }) => {
@@ -53,36 +44,20 @@ const CoffeeCard: React.FC<CoffeeCardProps> = ({
       style={styles.CardLinearGradientContainer}
       colors={[COLORS.primaryGreyHex, COLORS.primaryBlackHex]}>
       <ImageBackground
-        source={imagelink_square}
+        source={{ uri: image }}
         style={styles.CardImageBG}
         resizeMode="cover">
-        <View style={styles.CardRatingContainer}>
-          <CustomIcon
-            name={'star'}
-            color={COLORS.primaryOrangeHex}
-            size={FONTSIZE.size_16}
-          />
-          <Text style={styles.CardRatingText}>{average_rating}</Text>
-        </View>
+        {/* Add rating or additional overlay info if needed */}
       </ImageBackground>
-      <Text style={styles.CardTitle}>{name}</Text>
-      <Text style={styles.CardSubtitle}>{special_ingredient}</Text>
+      <Text style={styles.CardTitle}>{title}</Text>
+      <Text style={styles.CardSubtitle}>{subtitle}</Text>
       <View style={styles.CardFooterRow}>
         <Text style={styles.CardPriceCurrency}>
-          $ <Text style={styles.CardPrice}>{price.price}</Text>
+          $ <Text style={styles.CardPrice}>{price.toFixed(2)}</Text>
         </Text>
         <TouchableOpacity
           onPress={() => {
-            buttonPressHandler({
-              id,
-              index,
-              type,
-              roasted,
-              imagelink_square,
-              name,
-              special_ingredient,
-              prices: [{...price, quantity: 1}],
-            });
+            buttonPressHandler({ id, title, subtitle, image, price });
           }}>
           <BGIcon
             color={COLORS.primaryWhiteHex}
@@ -108,25 +83,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.space_15,
     overflow: 'hidden',
   },
-  CardRatingContainer: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.primaryBlackRGBA,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.space_10,
-    paddingHorizontal: SPACING.space_15,
-    position: 'absolute',
-    borderBottomLeftRadius: BORDERRADIUS.radius_20,
-    borderTopRightRadius: BORDERRADIUS.radius_20,
-    top: 0,
-    right: 0,
-  },
-  CardRatingText: {
-    fontFamily: FONTFAMILY.poppins_medium,
-    color: COLORS.primaryWhiteHex,
-    lineHeight: 22,
-    fontSize: FONTSIZE.size_14,
-  },
   CardTitle: {
     fontFamily: FONTFAMILY.poppins_medium,
     color: COLORS.primaryWhiteHex,
@@ -136,6 +92,14 @@ const styles = StyleSheet.create({
     fontFamily: FONTFAMILY.poppins_light,
     color: COLORS.primaryWhiteHex,
     fontSize: FONTSIZE.size_10,
+  },
+  CardSizes: {
+    marginTop: 5,
+  },
+  CardSizesText: {
+    fontFamily: FONTFAMILY.poppins_light,
+    color: COLORS.primaryGreyHex,
+    fontSize: FONTSIZE.size_12,
   },
   CardFooterRow: {
     flexDirection: 'row',

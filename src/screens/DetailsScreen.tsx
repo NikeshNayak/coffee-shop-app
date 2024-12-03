@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   ScrollView,
   StatusBar,
@@ -7,6 +7,7 @@ import {
   View,
   TouchableWithoutFeedback,
   TouchableOpacity,
+  ActivityIndicator, // For the loading spinner
 } from 'react-native';
 import {useStore} from '../store/store';
 import {
@@ -18,11 +19,15 @@ import {
 } from '../theme/theme';
 import ImageBackgroundInfo from '../components/ImageBackgroundInfo';
 import PaymentFooter from '../components/PaymentFooter';
+import { BASEURL } from '../../globalConfig';
 
 const DetailsScreen = ({navigation, route}: any) => {
-  const ItemOfIndex = useStore((state: any) =>
-    route.params.type == 'Coffee' ? state.CoffeeList : state.BeanList,
-  )[route.params.index];
+  const itemId = route.params.itemId;
+  const [product, setProduct] = useState<any>(null); // Store product data
+  const [price, setPrice] = useState<any>(null);
+  const [fullDesc, setFullDesc] = useState(false);
+  const [loading, setLoading] = useState(true); // Loading state
+
   const addToFavoriteList = useStore((state: any) => state.addToFavoriteList);
   const deleteFromFavoriteList = useStore(
     (state: any) => state.deleteFromFavoriteList,
@@ -30,8 +35,37 @@ const DetailsScreen = ({navigation, route}: any) => {
   const addToCart = useStore((state: any) => state.addToCart);
   const calculateCartPrice = useStore((state: any) => state.calculateCartPrice);
 
-  const [price, setPrice] = useState(ItemOfIndex.prices[0]);
-  const [fullDesc, setFullDesc] = useState(false);
+  const fetchProduct = async () => {
+    setLoading(true); // Start loading
+
+    try {
+      const response = await fetch(
+        `${BASEURL}/app/product/getproductbyid/${itemId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setProduct(data.product); // Set product data
+      } else {
+        console.error('Product not found');
+      }
+    } catch (error) {
+      console.error('Error fetching product:', error);
+    } finally {
+      setLoading(false); // End loading
+    }
+  };
+
+  useEffect(() => {
+    fetchProduct();
+  }, [route.params.itemId]);
 
   const ToggleFavourite = (favourite: boolean, type: string, id: string) => {
     favourite ? deleteFromFavoriteList(type, id) : addToFavoriteList(type, id);
@@ -41,29 +75,14 @@ const DetailsScreen = ({navigation, route}: any) => {
     navigation.pop();
   };
 
-  const addToCarthandler = ({
-    id,
-    index,
-    name,
-    roasted,
-    imagelink_square,
-    special_ingredient,
-    type,
-    price,
-  }: any) => {
-    addToCart({
-      id,
-      index,
-      name,
-      roasted,
-      imagelink_square,
-      special_ingredient,
-      type,
-      prices: [{...price, quantity: 1}],
-    });
-    calculateCartPrice();
-    navigation.navigate('Cart');
-  };
+  // Show a loading spinner when loading is true
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primaryOrangeHex} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.ScreenContainer}>
@@ -73,16 +92,16 @@ const DetailsScreen = ({navigation, route}: any) => {
         contentContainerStyle={styles.ScrollViewFlex}>
         <ImageBackgroundInfo
           EnableBackHandler={true}
-          imagelink_portrait={ItemOfIndex.imagelink_portrait}
-          type={ItemOfIndex.type}
-          id={ItemOfIndex.id}
-          favourite={ItemOfIndex.favourite}
-          name={ItemOfIndex.name}
-          special_ingredient={ItemOfIndex.special_ingredient}
-          ingredients={ItemOfIndex.ingredients}
-          average_rating={ItemOfIndex.average_rating}
-          ratings_count={ItemOfIndex.ratings_count}
-          roasted={ItemOfIndex.roasted}
+          imagelink_portrait={require('../assets/coffee_assets/americano/square/americano_pic_1_square.png')}
+          type={product?.type}
+          id={product?._id}
+          favourite={false}
+          name={product?.title}
+          special_ingredient={''}
+          ingredients={''}
+          average_rating={4.5}
+          ratings_count={'5'}
+          roasted={'roasted'}
           BackHandler={BackHandler}
           ToggleFavourite={ToggleFavourite}
         />
@@ -94,9 +113,7 @@ const DetailsScreen = ({navigation, route}: any) => {
               onPress={() => {
                 setFullDesc(prev => !prev);
               }}>
-              <Text style={styles.DescriptionText}>
-                {ItemOfIndex.description}
-              </Text>
+              <Text style={styles.DescriptionText}>{product?.description}</Text>
             </TouchableWithoutFeedback>
           ) : (
             <TouchableWithoutFeedback
@@ -104,62 +121,15 @@ const DetailsScreen = ({navigation, route}: any) => {
                 setFullDesc(prev => !prev);
               }}>
               <Text numberOfLines={3} style={styles.DescriptionText}>
-                {ItemOfIndex.description}
+                {product?.description}
               </Text>
             </TouchableWithoutFeedback>
           )}
-          <Text style={styles.InfoTitle}>Size</Text>
-          <View style={styles.SizeOuterContainer}>
-            {ItemOfIndex.prices.map((data: any) => (
-              <TouchableOpacity
-                key={data.size}
-                onPress={() => {
-                  setPrice(data);
-                }}
-                style={[
-                  styles.SizeBox,
-                  {
-                    borderColor:
-                      data.size == price.size
-                        ? COLORS.primaryOrangeHex
-                        : COLORS.primaryDarkGreyHex,
-                  },
-                ]}>
-                <Text
-                  style={[
-                    styles.SizeText,
-                    {
-                      fontSize:
-                        ItemOfIndex.type == 'Bean'
-                          ? FONTSIZE.size_14
-                          : FONTSIZE.size_16,
-                      color:
-                        data.size == price.size
-                          ? COLORS.primaryOrangeHex
-                          : COLORS.secondaryLightGreyHex,
-                    },
-                  ]}>
-                  {data.size}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
         </View>
         <PaymentFooter
-          price={price}
+          price={product?.price.toString()}
           buttonTitle="Add to Cart"
-          buttonPressHandler={() => {
-            addToCarthandler({
-              id: ItemOfIndex.id,
-              index: ItemOfIndex.index,
-              name: ItemOfIndex.name,
-              roasted: ItemOfIndex.roasted,
-              imagelink_square: ItemOfIndex.imagelink_square,
-              special_ingredient: ItemOfIndex.special_ingredient,
-              type: ItemOfIndex.type,
-              price: price,
-            });
-          }}
+          buttonPressHandler={() => {}}
         />
       </ScrollView>
     </View>
@@ -208,6 +178,12 @@ const styles = StyleSheet.create({
   },
   SizeText: {
     fontFamily: FONTFAMILY.poppins_medium,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.primaryBlackHex,
   },
 });
 
